@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//usr/local/var/postgresql@14/global/**)",
+      "Bash(/usr/local/opt/postgresql@14/bin/pg_dumpall --roles-only --no-password)"
+    ]
+  }
+}

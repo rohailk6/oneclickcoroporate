@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                   String               @id @default(cuid())
+  fullName             String
+  email                String               @unique
+  phoneNumber          String
+  password             String
+  role                 UserRole             @default(CUSTOMER)
+  emailVerifiedAt      DateTime?
+  verificationToken    String?
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
+  createdAt            DateTime             @default(now()) @map("created_at")
+  updatedAt            DateTime             @updatedAt
+  applications         CompanyApplication[]
+  documents            Document[]
+  payments             Payment[]
+
+  @@map("users")
+}
+
+model CompanyApplication {
+  id                String            @id @default(cuid())
+  userId            String            @map("user_id")
+  companyName       String            @map("company_name")
+  selectedState     State             @map("selected_state")
+  entityType        EntityType        @default(LLC) @map("entity_type")
+  applicationStatus ApplicationStatus @default(SUBMITTED) @map("application_status")
+  submissionDate    DateTime          @default(now()) @map("submission_date")
+  notes             String?
+  industry          String?
+  businessPurpose   String?
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payments          Payment[]
+
+  @@index([userId])
+  @@index([selectedState])
+  @@map("company_applications")
+}
+
+model Document {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  fileName     String   @map("file_name")
+  fileUrl      String   @map("file_url")
+  uploadDate   DateTime @default(now()) @map("upload_date")
+  documentType String   @map("document_type")
+  mimeType     String?
+  size         Int?
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("documents")
+}
+
+model Payment {
+  id            String              @id @default(cuid())
+  userId        String              @map("user_id")
+  applicationId String?             @map("application_id")
+  amount        Int
+  paymentStatus PaymentStatus       @default(PENDING) @map("payment_status")
+  paymentDate   DateTime?           @map("payment_date")
+  transactionId String?             @unique @map("transaction_id")
+  invoiceNumber String?             @unique
+  application   CompanyApplication? @relation(fields: [applicationId], references: [id])
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("payments")
+}
+
+enum UserRole {
+  CUSTOMER
+  ADMIN
+}
+
+enum ApplicationStatus {
+  SUBMITTED
+  IN_REVIEW
+  FILING_IN_PROGRESS
+  COMPLETED
+}
+
+enum EntityType {
+  LLC
+}
+
+enum State {
+  TEXAS
+  NEW_YORK
+  FLORIDA
+  WYOMING
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}

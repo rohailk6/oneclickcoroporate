@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+Backend/dist/
+Frontend/.next/
+Frontend/out/
+
+# Environment files (contain secrets, never commit)
+.env
+.env.local
+.env.*.local
+
+# Uploads
+Backend/uploads/*
+!Backend/uploads/.gitkeep
+
+# Misc
+.DS_Store
+*.zip
+npm-debug.log*

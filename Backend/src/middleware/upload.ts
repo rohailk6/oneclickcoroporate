@@ -1,9 +1,7 @@
-import os from "node:os";
-import path from "node:path";
 import multer from "multer";
 import { env } from "../config/env.js";
 
-export const uploadDir = process.env.VERCEL ? path.join(os.tmpdir(), env.UPLOAD_DIR) : env.UPLOAD_DIR;
+export const uploadDir = env.UPLOAD_DIR;
 
 const storage = multer.diskStorage({
   destination: uploadDir,

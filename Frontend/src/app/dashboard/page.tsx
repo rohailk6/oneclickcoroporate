@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import {
   Bell, Download, FileUp, ReceiptText, Settings, UserRound,
@@ -235,7 +236,9 @@ function DocumentsTab({ token }: { token: string | null }) {
 /* ── Page ── */
 export default function DashboardPage() {
   const { user, token } = useAuth();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>("overview");
+  const [checkingAccess, setCheckingAccess] = useState(true);
 
   const firstName = user?.fullName?.split(" ")[0] ?? "there";
   const initials  = user?.fullName?.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase() ?? "?";
@@ -244,6 +247,48 @@ export default function DashboardPage() {
     { invoice: "INV-1001", desc: "Wyoming LLC Formation",      amount: "$250", date: "Dec 15, 2024", status: "Paid"     },
     { invoice: "INV-1002", desc: "Registered Agent (Year 1)", amount: "$0",   date: "Dec 15, 2024", status: "Included" },
   ];
+
+  // Only show the dashboard once the user has completed the company registration process.
+  useEffect(() => {
+    if (!token) {
+      setCheckingAccess(false);
+      return;
+    }
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const res = await fetch(`${API}/applications`, {
+          headers: { Authorization: `Bearer ${token}` },
+          credentials: "include",
+        });
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        const applications = data.applications ?? [];
+        if (!cancelled && applications.length === 0) {
+          router.replace("/register-company");
+          return;
+        }
+      } catch {
+        // If the check fails, don't lock the user out of their dashboard.
+      } finally {
+        if (!cancelled) setCheckingAccess(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [token, router]);
+
+  if (checkingAccess) {
+    return (
+      <div className="min-h-screen bg-brand-off-white dark:bg-brand-black">
+        <Navbar />
+        <div className="flex min-h-[60vh] items-center justify-center gap-2 text-sm text-brand-dark-gray/40 dark:text-white/30">
+          <Loader2 className="size-4 animate-spin" /> Loading your dashboard…
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-brand-off-white dark:bg-brand-black">
